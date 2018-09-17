@@ -20,30 +20,69 @@
 ;;;
 
 (def blinker
+  "A simple pattern to play with."
   [[0 0 0 0 0]
    [0 0 0 0 0]
    [0 1 1 1 0]
    [0 0 0 0 0]
    [0 0 0 0 0]])
 
+
+(defn grid-coordinates
+  "All the coordinates for a given grid"
+  [grid]
+  (let [X (count (get grid 0))
+        Y (count grid)]
+    (for [x (range X)
+         y (range Y)]
+      [x y])))
+
+#_(grid-coordinates [[1 1] [1 1]])
+
+(defn alive-cells
+  "Convert full grid to just a list of alive cells (coordinates)."
+  [grid]
+  (let [grid-coordinates (grid-coordinates grid)
+        alive? (fn [[x, y]] (= 1 (get-in grid [x y])))]
+    (filter alive? grid-coordinates)))
+
+#_(livers blinker)
+
 (defn render
   "Pretty print a grid as a table. A row under a row."    
   [grid]
   (reduce #(str %1 "\n" %2) grid))
 
-#_(println (render blinker))
+(comment
+  (println (render blinker)))
 
-(defn neighbors-coords
-  "Given a cell coordinates, return coordinates of it's neighbors."
+;;;
+;;; The main programming challenge here is to translate from
+;;; the current grid state to the next step's state.
+;;;
+;;; To apply the simple rules of the game, we should know two things
+;;; for each cell: state (alive or dead) and count of neighbors.
+;;;
+
+(defn neighbors
+  "Given a cell coordinates, return coordinates of it's neighbors.
+  - Only non-negative coordinates.
+  - Not the cell itself."
   [x y]
-  (let [coordinates
-        [[(dec x) (dec y)] [(dec x) y] [(dec x) (inc y)]
-         [(inc x) (dec y)] [(inc x) y] [(inc x) (inc y)]
-         [x (dec y)] [x (inc y)]]
-        
-        non-neg? #(not (neg? %))]
-    
-    (filter #(every? non-neg? %) coordinates)))
+  (for [x' [(dec x) x (inc x)]
+        y' [(dec y) y (inc y)] :when (and
+                                      (not= [x' y'] [x y])
+                                      (not (neg? x'))
+                                      (not (neg? y')))]
+    [x' y']))
+
+;; TODO make a spec:
+;;   1 input coordinates is non-negative
+;;   2 result does not contain the input
+;;   3 result does not contain negative numbers
+#_(= (neighbors 4 4) '([3 3] [3 4] [3 5] [5 3] [5 4] [5 5] [4 3] [4 5]))
+#_(= (neighbors 0 0) '([1 0] [1 1] [0 1]))
+
 
 (defn zero-grid
   "Given a grid, make a grid of the same size, but of only zeroes."
@@ -53,14 +92,24 @@
 #_(zero-grid blinker)
 #_(= (zero-grid [[1 1] [1 0]]) [[0 0] [0 0]])
 
-#_(defn count-neighbors
-  "Replace each cell state with the count of it's neighbors."
+(defn count-neighbors
+  "Replace each cell with the count of it's neighbors.
+    
+  Starting with the `grid` of zeroes,
+    for each `cell`, which are alive:
+    for each `neighbor`:
+    inc the count by 1
+         
+  That is, each alive cell visits each of its neighbors."
   [grid]
-  ;; Reduce:
-  ;;   Start with a zero grid;
-  ;;   Account neighbors of the next cell.
-  (let [zero-grid (zero-grid grid)])
-  (reduce ))
+  (let [zero-grid (zero-grid grid)
+        alive-cells (alive-cells grid)
+        neighbors-visits (reduce concat (map neighbors alive-cells))
+        do-visit (fn [x y] (update-in neighbor-grid [x y] inc))]
+    (reduce do-visit neighbors-visits zero-grid)
+    neighbors-visits))
+
+(count-neighbors blinker)
 
 (defn prepare-next-step
   "Prepares data to decide the next step.
@@ -68,13 +117,6 @@
   [grid]
   ;; 
   (let []))
-
-;; TODO make a spec:
-;;   1 input coordinates is non-negative
-;;   2 result does not contain the input
-;;   3 result does not contain negative numbers
-#_(= (neighbors-coords 4 4) '([3 3] [3 4] [3 5] [5 3] [5 4] [5 5] [4 3] [4 5]))
-#_(= (neighbors-coords 0 0) '([1 0] [1 1] [0 1]))
 
 (defn next-step
   "Calculates the next state of grid.
