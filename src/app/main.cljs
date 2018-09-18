@@ -68,7 +68,7 @@
   "Given a cell coordinates, return coordinates of it's neighbors.
   - Only non-negative coordinates.
   - Not the cell itself."
-  [x y]
+  [[x y]]
   (for [x' [(dec x) x (inc x)]
         y' [(dec y) y (inc y)] :when (and
                                       (not= [x' y'] [x y])
@@ -80,14 +80,17 @@
 ;;   1 input coordinates is non-negative
 ;;   2 result does not contain the input
 ;;   3 result does not contain negative numbers
-#_(= (neighbors 4 4) '([3 3] [3 4] [3 5] [5 3] [5 4] [5 5] [4 3] [4 5]))
-#_(= (neighbors 0 0) '([1 0] [1 1] [0 1]))
+#_(= (set (neighbors [4 4])) (set '([3 3] [3 4] [3 5] [5 3] [5 4] [5 5] [4 3] [4 5])))
+#_(= (set (neighbors [0 0])) (set '([1 0] [1 1] [0 1])))
+#_(map neighbors '([2 1] [2 2] [2 3]))
 
 
 (defn zero-grid
-  "Given a grid, make a grid of the same size, but of only zeroes."
+  "Given a grid, make a grid of the same size, but of only zeroes.
+  It's important to return a vector of vectors, no sequences."
   [grid]
-  (map #(map (constantly 0) %) grid))
+  (let [seq00 (map #(map (constantly 0) %) grid)]
+    (vec (map vec seq00))))
 
 #_(zero-grid blinker)
 #_(= (zero-grid [[1 1] [1 0]]) [[0 0] [0 0]])
@@ -102,14 +105,13 @@
          
   That is, each alive cell visits each of its neighbors."
   [grid]
-  (let [zero-grid (zero-grid grid)
-        alive-cells (alive-cells grid)
-        neighbors-visits (reduce concat (map neighbors alive-cells))
-        do-visit (fn [x y] (update-in neighbor-grid [x y] inc))]
-    (reduce do-visit neighbors-visits zero-grid)
-    neighbors-visits))
+  (let [neighbors-visits (reduce concat (map neighbors (alive-cells grid)))]
+    (reduce (fn [acc [x y]] (update-in acc [x y] inc))
+            (zero-grid grid)
+            neighbors-visits)))
 
-(count-neighbors blinker)
+(println
+ (count-neighbors blinker))
 
 (defn prepare-next-step
   "Prepares data to decide the next step.
@@ -133,18 +135,12 @@
   )
 
 
-;;; The next lines are the original example.
-
-(def a 1)
-
-(defonce b 2)
-
 (defn main! []
   (println "[main]: loading"))
 
 (defn reload! []
-  (println "[main] reloaded lib:" lib/c lib/d)
-  (println "[main] reloaded:" a b))
+  (println
+   (count-neighbors blinker)))
 
 (main!)
 
