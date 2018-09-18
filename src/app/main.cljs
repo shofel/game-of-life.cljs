@@ -7,16 +7,23 @@
 ;; Any live cell with two or three live neighbors lives on to the next generation.
 ;; Any live cell with more than three live neighbors dies, as if by overpopulation.
 ;; Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
-;;;
-
-;;;
+;;
+;;
+;; Briefly:
+;;
 ;; Live:
 ;; if (< x 2) dead
 ;; if (<= 2 x 3) live
 ;; if (> x 3) dead
 ;;
 ;; Dead:
-;; if (= x 3) live
+;; if (= x 3) live"
+;;
+;;
+;; And finally:
+;; Alive if and only if
+;; (or (and alive? (= x 2))
+;;     (= x 3))
 ;;;
 
 (def blinker
@@ -95,7 +102,7 @@
 #_(zero-grid blinker)
 #_(= (zero-grid [[1 1] [1 0]]) [[0 0] [0 0]])
 
-(defn count-neighbors
+(defn neighbors-grid
   "Replace each cell with the count of it's neighbors.
     
   Starting with the `grid` of zeroes,
@@ -110,8 +117,8 @@
             (zero-grid grid)
             neighbors-visits)))
 
-(println
- (count-neighbors blinker))
+(comment
+  (println (neighbors-grid blinker)))
 
 (defn prepare-next-step
   "Prepares data to decide the next step.
@@ -122,25 +129,29 @@
 
 (defn next-step
   "Calculates the next state of grid.
-   The naive approach is to create another table with tuples [state, neighbors];
-   and then apply the rules to each cell."
+   Alive when and only when:
+   (or (and alive? (= x 2))
+       (= x 3))"
   [grid]
-  ;; 1 convert cells to [state, neighbors] tuples.
+  (let [neighbors-grid (neighbors-grid grid)]
+    ;; Return only alive ones.
+    (for [[x y] (grid-coordinates grid)
+          
+          :let [alive? (= 1 (get-in grid [x y]))
+                neighbors (get-in neighbors-grid [x y])]
+          
+          :when (or (and alive? (= neighbors 2))
+                    (= neighbors 3))]
+      [x y])))
 
-  (let [grid' grid]
-    )
-
-  ;;   Loop over cells. For alive cells increase the neighbor counter
-  ;;   for each of their neighbors.
-  )
-
+#_(next-step blinker)
 
 (defn main! []
   (println "[main]: loading"))
 
 (defn reload! []
   (println
-   (count-neighbors blinker)))
+   (next-step blinker)))
 
 (main!)
 
