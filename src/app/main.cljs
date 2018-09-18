@@ -79,7 +79,7 @@
 ;;; the current grid state to the next step's state.
 ;;;
 ;;; To apply the simple rules of the game, we should know two things
-;;; for each cell: state (alive or dead) and count of neighbors.
+;;; about each cell: state (alive or dead) and count of neighbors.
 ;;;
 
 (defn neighbors
@@ -90,12 +90,11 @@
   (for [x' [(dec x) x (inc x)]
         y' [(dec y) y (inc y)] :when (and
                                       (not= [x' y'] [x y])
-                                      (not (neg? x'))
-                                      (not (neg? y')))]
+                                      (every? (comp not neg?) [x' y']))]
     [x' y']))
 
 ;; TODO make a spec:
-;;   1 input coordinates is non-negative
+;;   1 input coordinates are non-negative
 ;;   2 result does not contain the input
 ;;   3 result does not contain negative numbers
 #_(= (set (neighbors [4 4])) (set '([3 3] [3 4] [3 5] [5 3] [5 4] [5 5] [4 3] [4 5])))
@@ -104,7 +103,7 @@
 
 
 (defn zero-grid
-  "Given a grid, make a grid of the same size, but of only zeroes.
+  "Given a grid, make a grid of the same size, filled with zeroes.
   It's important to return a vector of vectors, no sequences."
   [grid]
   (let [seq00 (map #(map (constantly 0) %) grid)]
@@ -135,7 +134,6 @@
        (= x 3))"
   [grid]
   (let [neighbors-grid (neighbors-grid grid)]
-    ;; Return only alive ones.
     (for [[x y] (grid-coordinates grid)
           
           :let [alive? (= 1 (get-in grid [x y]))
@@ -147,9 +145,11 @@
 
 #_(next-livers blinker)
 
-(def next-step
-  (comp alive->all next-livers))
+(defn next-step
+  [grid]
+  (alive->all (next-livers grid) grid))
 
+;; Blinker must blink.
 (= blinker
    (-> blinker
        next-step
@@ -163,4 +163,3 @@
    (next-step blinker)))
 
 (main!)
-
