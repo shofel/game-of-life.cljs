@@ -128,14 +128,7 @@
             (zero-grid grid)
             neighbors-visits)))
 
-(comment
-  (println (neighbors-grid blinker)))
-
-elet [x fn next-ste (all->alive blinker))]
-
-
-
-p
+(defn next-livers
   "Calculates the next state of grid.
    Alive when and only when:
    (or (and alive? (= x 2))
@@ -152,18 +145,15 @@ p
                     (= neighbors 3))]
       [x y])))
 
-#_(next-step blinker)
+#_(next-livers blinker)
 
-(defn next-step'
-  [grid]
-  (alive->all (next-step grid) grid))
+(def next-step
+  (comp alive->all next-livers))
 
-;;; The blinker must blink!
-;;; TEST
 (= blinker
    (-> blinker
-       next-step'
-       next-step'))
+       next-step
+       next-step))
 
 (defn main! []
   (println "[main]: loading"))
