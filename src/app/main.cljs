@@ -46,14 +46,25 @@
 
 #_(grid-coordinates [[1 1] [1 1]])
 
-(defn alive-cells
+(defn all->alive
   "Convert full grid to just a list of alive cells (coordinates)."
   [grid]
   (let [grid-coordinates (grid-coordinates grid)
         alive? (fn [[x, y]] (= 1 (get-in grid [x y])))]
     (filter alive? grid-coordinates)))
 
-#_(livers blinker)
+(defn alive->all
+  "Convert a list of alive cells to a full grid."
+  [livers grid]
+  (let [mark-alive (fn [grid [x y]] (assoc-in grid [x y] 1))]
+    (reduce mark-alive (zero-grid grid) livers)))
+
+#_(= (all->alive blinker)
+     '([2 1] [2 2] [2 3]))
+
+(comment
+  (= (alive->all (all->alive blinker) blinker)
+     blinker))
 
 (defn render
   "Pretty print a grid as a table. A row under a row."    
@@ -106,13 +117,13 @@
   "Replace each cell with the count of it's neighbors.
     
   Starting with the `grid` of zeroes,
-    for each `cell`, which are alive:
+    for each `cell`, which is alive:
     for each `neighbor`:
-    inc the count by 1
+    inc count by 1
          
-  That is, each alive cell visits each of its neighbors."
+  This is like each alive cell visits all of its neighbors."
   [grid]
-  (let [neighbors-visits (reduce concat (map neighbors (alive-cells grid)))]
+  (let [neighbors-visits (reduce concat (map neighbors (all->alive grid)))]
     (reduce (fn [acc [x y]] (update-in acc [x y] inc))
             (zero-grid grid)
             neighbors-visits)))
@@ -120,14 +131,11 @@
 (comment
   (println (neighbors-grid blinker)))
 
-(defn prepare-next-step
-  "Prepares data to decide the next step.
-   That is transform each cell to a tuple `[alive neighbors-count]`"
-  [grid]
-  ;; 
-  (let []))
+elet [x fn next-ste (all->alive blinker))]
 
-(defn next-step
+
+
+p
   "Calculates the next state of grid.
    Alive when and only when:
    (or (and alive? (= x 2))
@@ -145,6 +153,17 @@
       [x y])))
 
 #_(next-step blinker)
+
+(defn next-step'
+  [grid]
+  (alive->all (next-step grid) grid))
+
+;;; The blinker must blink!
+;;; TEST
+(= blinker
+   (-> blinker
+       next-step'
+       next-step'))
 
 (defn main! []
   (println "[main]: loading"))
